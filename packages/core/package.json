@@ -12,12 +12,14 @@
   "dependencies": {
     "cheerio": "^1.2.0",
     "drizzle-orm": "^0.45.2",
+    "js-tiktoken": "^1.0.21",
     "marked": "^18.0.3",
     "postgres": "^3.4.9"
   },
   "devDependencies": {
     "@types/pg": "^8.20.0",
     "drizzle-kit": "^0.31.10",
+    "tsx": "^4.21.0",
     "vitest": "^1.6.0"
   }
 }
