@@ -14,6 +14,7 @@
     "drizzle-orm": "^0.45.2",
     "js-tiktoken": "^1.0.21",
     "marked": "^18.0.3",
+    "openai": "^6.35.0",
     "postgres": "^3.4.9"
   },
   "devDependencies": {
