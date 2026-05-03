@@ -213,7 +213,7 @@ export default defineConfig({
 export {};
 ```
 
-- [ ] **Step 7: Write `.env.example`**
+- [x] **Step 7: Write `.env.example`**
 
 ```
 DATABASE_URL=postgres://copilot:copilot@localhost:5432/copilot
@@ -224,7 +224,7 @@ SLACK_SIGNING_SECRET=
 NODE_ENV=development
 ```
 
-- [ ] **Step 8: Write minimal `README.md`**
+- [x] **Step 8: Write minimal `README.md`**
 
 ```md
 # Support Copilot
@@ -239,7 +239,7 @@ See `docs/architecture.md` for design.
 Run: `pnpm install`
 Expected: lockfile created, no errors.
 
-- [ ] **Step 10: Verify the test runner works**
+- [x] **Step 10: Verify the test runner works**
 
 Create `packages/core/tests/sanity.test.ts`:
 
@@ -256,7 +256,7 @@ describe("sanity", () => {
 Run: `pnpm test`
 Expected: 1 passing test.
 
-- [ ] **Step 11: Commit**
+- [x] **Step 11: Commit**
 
 ```bash
 git add .
@@ -273,7 +273,7 @@ git commit -m "chore: scaffold pnpm workspace with core package and vitest"
 - Create: `packages/core/src/db/schema.ts`, `packages/core/src/db/client.ts`, `packages/core/drizzle.config.ts`
 - Create: `packages/core/migrations/0000_init.sql`
 
-- [ ] **Step 1: Write `docker-compose.yml`**
+- [x] **Step 1: Write `docker-compose.yml`**
 
 ```yaml
 services:
@@ -297,13 +297,13 @@ volumes:
   pgdata:
 ```
 
-- [ ] **Step 2: Start Postgres and verify**
+- [x] **Step 2: Start Postgres and verify**
 
 Run: `docker compose up -d postgres`
 Run: `docker compose exec postgres pg_isready -U copilot`
 Expected: `accepting connections`.
 
-- [ ] **Step 3: Add Drizzle and pg dependencies**
+- [x] **Step 3: Add Drizzle and pg dependencies**
 
 Run inside `packages/core`:
 
@@ -312,7 +312,7 @@ pnpm add drizzle-orm postgres
 pnpm add -D drizzle-kit @types/pg
 ```
 
-- [ ] **Step 4: Write the schema**
+- [x] **Step 4: Write the schema**
 
 `packages/core/src/db/schema.ts`:
 
@@ -354,7 +354,7 @@ export type Chunk = typeof chunks.$inferSelect;
 export type NewChunk = typeof chunks.$inferInsert;
 ```
 
-- [ ] **Step 5: Write the migration**
+- [x] **Step 5: Write the migration**
 
 `packages/core/migrations/0000_init.sql`:
 
@@ -386,7 +386,7 @@ CREATE INDEX chunks_fts_idx
   ON chunks USING gin (to_tsvector('english', text));
 ```
 
-- [ ] **Step 6: Apply migration**
+- [x] **Step 6: Apply migration**
 
 ```bash
 docker compose exec -T postgres psql -U copilot -d copilot < packages/core/migrations/0000_init.sql
@@ -394,7 +394,7 @@ docker compose exec -T postgres psql -U copilot -d copilot < packages/core/migra
 
 Expected: `CREATE EXTENSION` ... `CREATE INDEX` (no errors).
 
-- [ ] **Step 7: Write the DB client**
+- [x] **Step 7: Write the DB client**
 
 `packages/core/src/db/client.ts`:
 
@@ -411,7 +411,7 @@ export function createDbClient(connectionString: string) {
 export type Db = ReturnType<typeof createDbClient>;
 ```
 
-- [ ] **Step 8: Write a connectivity test**
+- [x] **Step 8: Write a connectivity test**
 
 `packages/core/tests/db.test.ts`:
 
@@ -436,12 +436,12 @@ describe("db connectivity", () => {
 });
 ```
 
-- [ ] **Step 9: Run the test**
+- [x] **Step 9: Run the test**
 
 Run: `pnpm --filter @support-copilot/core test db`
 Expected: PASS.
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add .
@@ -456,13 +456,13 @@ git commit -m "feat(db): add postgres+pgvector schema with migration and client"
 
 - Create: `packages/core/src/ingest/parse.ts`, `packages/core/tests/ingest/parse.test.ts`
 
-- [ ] **Step 1: Add deps**
+- [x] **Step 1: Add deps**
 
 ```bash
 pnpm --filter @support-copilot/core add marked cheerio
 ```
 
-- [ ] **Step 2: Write the failing tests**
+- [x] **Step 2: Write the failing tests**
 
 `packages/core/tests/ingest/parse.test.ts`:
 
@@ -512,12 +512,12 @@ describe("parseHtml", () => {
 });
 ```
 
-- [ ] **Step 3: Run tests — expect failure**
+- [x] **Step 3: Run tests — expect failure**
 
 Run: `pnpm --filter @support-copilot/core test parse`
 Expected: FAIL with "parseMarkdown is not a function" / module not found.
 
-- [ ] **Step 4: Implement `parse.ts`**
+- [x] **Step 4: Implement `parse.ts`**
 
 `packages/core/src/ingest/parse.ts`:
 
@@ -593,12 +593,12 @@ export function parseHtml(input: string): ParsedDoc {
 }
 ```
 
-- [ ] **Step 5: Run tests — expect pass**
+- [x] **Step 5: Run tests — expect pass**
 
 Run: `pnpm --filter @support-copilot/core test parse`
 Expected: 6 passing.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add .
@@ -613,13 +613,13 @@ git commit -m "feat(ingest): parse markdown and html docs to plain text"
 
 - Create: `packages/core/src/ingest/chunk.ts`, `packages/core/tests/ingest/chunk.test.ts`
 
-- [ ] **Step 1: Add tokenizer dep**
+- [x] **Step 1: Add tokenizer dep**
 
 ```bash
 pnpm --filter @support-copilot/core add js-tiktoken
 ```
 
-- [ ] **Step 2: Write failing tests**
+- [x] **Step 2: Write failing tests**
 
 `packages/core/tests/ingest/chunk.test.ts`:
 
@@ -669,12 +669,12 @@ describe("chunkText", () => {
 });
 ```
 
-- [ ] **Step 3: Run — expect failure**
+- [x] **Step 3: Run — expect failure**
 
 Run: `pnpm --filter @support-copilot/core test chunk`
 Expected: FAIL — module not found.
 
-- [ ] **Step 4: Implement `chunk.ts`**
+- [x] **Step 4: Implement `chunk.ts`**
 
 `packages/core/src/ingest/chunk.ts`:
 
@@ -730,12 +730,12 @@ export function chunkText(text: string, opts: ChunkOptions): Chunk[] {
 }
 ```
 
-- [ ] **Step 5: Run — expect pass**
+- [x] **Step 5: Run — expect pass**
 
 Run: `pnpm --filter @support-copilot/core test chunk`
 Expected: all passing.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add .
@@ -750,13 +750,13 @@ git commit -m "feat(ingest): token-aware chunking with configurable overlap"
 
 - Create: `packages/core/src/ingest/embed.ts`, `packages/core/tests/ingest/embed.test.ts`
 
-- [ ] **Step 1: Add OpenAI SDK**
+- [x] **Step 1: Add OpenAI SDK**
 
 ```bash
 pnpm --filter @support-copilot/core add openai
 ```
 
-- [ ] **Step 2: Write failing tests**
+- [x] **Step 2: Write failing tests**
 
 `packages/core/tests/ingest/embed.test.ts`:
 
@@ -795,12 +795,12 @@ describe("embedTexts", () => {
 });
 ```
 
-- [ ] **Step 3: Run — expect failure**
+- [x] **Step 3: Run — expect failure**
 
 Run: `pnpm --filter @support-copilot/core test embed`
 Expected: FAIL.
 
-- [ ] **Step 4: Implement `embed.ts`**
+- [x] **Step 4: Implement `embed.ts`**
 
 `packages/core/src/ingest/embed.ts`:
 
@@ -833,12 +833,12 @@ export async function embedTexts(
 }
 ```
 
-- [ ] **Step 5: Run — expect pass**
+- [x] **Step 5: Run — expect pass**
 
 Run: `pnpm --filter @support-copilot/core test embed`
 Expected: 2 passing.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add .
@@ -853,7 +853,7 @@ git commit -m "feat(ingest): batched openai embedding pipeline"
 
 - Create: `packages/core/src/ingest/index.ts`, `packages/core/src/ingest/cli.ts`, `packages/core/tests/ingest/index.test.ts`
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 `packages/core/tests/ingest/index.test.ts`:
 
@@ -905,12 +905,12 @@ describe("ingestDocument", () => {
 });
 ```
 
-- [ ] **Step 2: Run — expect failure**
+- [x] **Step 2: Run — expect failure**
 
 Run: `pnpm --filter @support-copilot/core test ingest/index`
 Expected: FAIL — module not found.
 
-- [ ] **Step 3: Implement `ingest/index.ts`**
+- [x] **Step 3: Implement `ingest/index.ts`**
 
 `packages/core/src/ingest/index.ts`:
 
@@ -975,12 +975,12 @@ export async function ingestDocument(
 }
 ```
 
-- [ ] **Step 4: Run — expect pass**
+- [x] **Step 4: Run — expect pass**
 
 Run: `pnpm --filter @support-copilot/core test ingest/index`
 Expected: PASS.
 
-- [ ] **Step 5: Add CLI entry**
+- [x] **Step 5: Add CLI entry**
 
 `packages/core/src/ingest/cli.ts`:
 
@@ -1032,7 +1032,7 @@ Add script to `packages/core/package.json`:
 pnpm --filter @support-copilot/core add -D tsx
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add .
@@ -1047,7 +1047,7 @@ git commit -m "feat(ingest): end-to-end document ingestion with cli"
 
 - Create: `packages/core/src/retrieve/vector.ts`, `packages/core/tests/retrieve/vector.test.ts`
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 `packages/core/tests/retrieve/vector.test.ts`:
 
@@ -1112,12 +1112,12 @@ describe("vectorSearch", () => {
 });
 ```
 
-- [ ] **Step 2: Run — expect failure**
+- [x] **Step 2: Run — expect failure**
 
 Run: `pnpm --filter @support-copilot/core test retrieve/vector`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement `vector.ts`**
+- [x] **Step 3: Implement `vector.ts`**
 
 `packages/core/src/retrieve/vector.ts`:
 
@@ -1162,12 +1162,12 @@ export async function vectorSearch(
 }
 ```
 
-- [ ] **Step 4: Run — expect pass**
+- [x] **Step 4: Run — expect pass**
 
 Run: `pnpm --filter @support-copilot/core test retrieve/vector`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add .
@@ -1182,7 +1182,7 @@ git commit -m "feat(retrieve): pgvector cosine similarity search"
 
 - Create: `packages/core/src/retrieve/bm25.ts`, `packages/core/tests/retrieve/bm25.test.ts`
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 `packages/core/tests/retrieve/bm25.test.ts`:
 
@@ -1248,12 +1248,12 @@ describe("bm25Search", () => {
 });
 ```
 
-- [ ] **Step 2: Run — expect failure**
+- [x] **Step 2: Run — expect failure**
 
 Run: `pnpm --filter @support-copilot/core test retrieve/bm25`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement `bm25.ts`**
+- [x] **Step 3: Implement `bm25.ts`**
 
 `packages/core/src/retrieve/bm25.ts`:
 
@@ -1298,12 +1298,12 @@ export async function bm25Search(
 }
 ```
 
-- [ ] **Step 4: Run — expect pass**
+- [x] **Step 4: Run — expect pass**
 
 Run: `pnpm --filter @support-copilot/core test retrieve/bm25`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add .
@@ -1318,7 +1318,7 @@ git commit -m "feat(retrieve): postgres tsvector bm25-style search"
 
 - Create: `packages/core/src/retrieve/hybrid.ts`, `packages/core/tests/retrieve/hybrid.test.ts`
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 `packages/core/tests/retrieve/hybrid.test.ts`:
 
@@ -1367,12 +1367,12 @@ describe("rrfMerge", () => {
 });
 ```
 
-- [ ] **Step 2: Run — expect failure**
+- [x] **Step 2: Run — expect failure**
 
 Run: `pnpm --filter @support-copilot/core test retrieve/hybrid`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement `hybrid.ts`**
+- [x] **Step 3: Implement `hybrid.ts`**
 
 `packages/core/src/retrieve/hybrid.ts`:
 
@@ -1408,12 +1408,12 @@ export function rrfMerge(
 }
 ```
 
-- [ ] **Step 4: Run — expect pass**
+- [x] **Step 4: Run — expect pass**
 
 Run: `pnpm --filter @support-copilot/core test retrieve/hybrid`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add .
@@ -1428,13 +1428,13 @@ git commit -m "feat(retrieve): reciprocal rank fusion for hybrid retrieval"
 
 - Create: `packages/core/src/retrieve/rerank.ts`, `packages/core/tests/retrieve/rerank.test.ts`
 
-- [ ] **Step 1: Add Cohere SDK**
+- [x] **Step 1: Add Cohere SDK**
 
 ```bash
 pnpm --filter @support-copilot/core add cohere-ai
 ```
 
-- [ ] **Step 2: Write failing test**
+- [x] **Step 2: Write failing test**
 
 `packages/core/tests/retrieve/rerank.test.ts`:
 
@@ -1497,12 +1497,12 @@ describe("rerank", () => {
 });
 ```
 
-- [ ] **Step 3: Run — expect failure**
+- [x] **Step 3: Run — expect failure**
 
 Run: `pnpm --filter @support-copilot/core test retrieve/rerank`
 Expected: FAIL.
 
-- [ ] **Step 4: Implement `rerank.ts`**
+- [x] **Step 4: Implement `rerank.ts`**
 
 `packages/core/src/retrieve/rerank.ts`:
 
@@ -1535,12 +1535,12 @@ export async function rerank(
 }
 ```
 
-- [ ] **Step 5: Run — expect pass**
+- [x] **Step 5: Run — expect pass**
 
 Run: `pnpm --filter @support-copilot/core test retrieve/rerank`
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add .
@@ -1555,7 +1555,7 @@ git commit -m "feat(retrieve): cohere rerank wrapper"
 
 - Create: `packages/core/src/retrieve/index.ts`, `packages/core/tests/retrieve/index.test.ts`
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 `packages/core/tests/retrieve/index.test.ts`:
 
@@ -1595,12 +1595,12 @@ describe("retrieve pipeline", () => {
 });
 ```
 
-- [ ] **Step 2: Run — expect failure**
+- [x] **Step 2: Run — expect failure**
 
 Run: `pnpm --filter @support-copilot/core test retrieve/index`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement `retrieve/index.ts`**
+- [x] **Step 3: Implement `retrieve/index.ts`**
 
 `packages/core/src/retrieve/index.ts`:
 
@@ -1638,12 +1638,12 @@ export async function retrieve(
 }
 ```
 
-- [ ] **Step 4: Run — expect pass**
+- [x] **Step 4: Run — expect pass**
 
 Run: `pnpm --filter @support-copilot/core test retrieve/index`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add .
@@ -1658,13 +1658,13 @@ git commit -m "feat(retrieve): wire embed → vector+bm25 → rrf → rerank"
 
 - Create: `packages/core/src/generate/answer.ts`, `packages/core/tests/generate/answer.test.ts`
 
-- [ ] **Step 1: Add Zod**
+- [x] **Step 1: Add Zod**
 
 ```bash
 pnpm --filter @support-copilot/core add zod
 ```
 
-- [ ] **Step 2: Write failing test**
+- [x] **Step 2: Write failing test**
 
 `packages/core/tests/generate/answer.test.ts`:
 
@@ -1743,12 +1743,12 @@ describe("generateAnswer", () => {
 });
 ```
 
-- [ ] **Step 3: Run — expect failure**
+- [x] **Step 3: Run — expect failure**
 
 Run: `pnpm --filter @support-copilot/core test generate/answer`
 Expected: FAIL.
 
-- [ ] **Step 4: Implement `generate/answer.ts`**
+- [x] **Step 4: Implement `generate/answer.ts`**
 
 `packages/core/src/generate/answer.ts`:
 
@@ -1837,12 +1837,12 @@ export async function generateAnswer(
 }
 ```
 
-- [ ] **Step 5: Run — expect pass**
+- [x] **Step 5: Run — expect pass**
 
 Run: `pnpm --filter @support-copilot/core test generate/answer`
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add .
@@ -1857,7 +1857,7 @@ git commit -m "feat(generate): structured-output answer with citations"
 
 - Create: `packages/core/src/generate/guard.ts`, `packages/core/tests/generate/guard.test.ts`
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 `packages/core/tests/generate/guard.test.ts`:
 
@@ -1924,12 +1924,12 @@ describe("applyGuard", () => {
 });
 ```
 
-- [ ] **Step 2: Run — expect failure**
+- [x] **Step 2: Run — expect failure**
 
 Run: `pnpm --filter @support-copilot/core test generate/guard`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement `guard.ts`**
+- [x] **Step 3: Implement `guard.ts`**
 
 `packages/core/src/generate/guard.ts`:
 
@@ -1973,12 +1973,12 @@ export function applyGuard(
 }
 ```
 
-- [ ] **Step 4: Run — expect pass**
+- [x] **Step 4: Run — expect pass**
 
 Run: `pnpm --filter @support-copilot/core test generate/guard`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add .
@@ -1993,7 +1993,7 @@ git commit -m "feat(generate): hallucination guard with citation+quote verificat
 
 - Create: `packages/core/src/generate/index.ts`, `packages/core/src/index.ts` (update), `packages/core/tests/generate/orchestration.test.ts`
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 `packages/core/tests/generate/orchestration.test.ts`:
 
@@ -2047,12 +2047,12 @@ describe("answerQuery", () => {
 });
 ```
 
-- [ ] **Step 2: Run — expect failure**
+- [x] **Step 2: Run — expect failure**
 
 Run: `pnpm --filter @support-copilot/core test generate/orchestration`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement `generate/index.ts`**
+- [x] **Step 3: Implement `generate/index.ts`**
 
 `packages/core/src/generate/index.ts`:
 
@@ -2083,7 +2083,7 @@ export { generateAnswer, AnswerSchema, type Answer } from "./answer.js";
 export { applyGuard } from "./guard.js";
 ```
 
-- [ ] **Step 4: Update `packages/core/src/index.ts`**
+- [x] **Step 4: Update `packages/core/src/index.ts`**
 
 ```ts
 export * from "./db/client.js";
@@ -2097,12 +2097,12 @@ export * from "./retrieve/rerank.js";
 export * from "./generate/index.js";
 ```
 
-- [ ] **Step 5: Run — expect pass**
+- [x] **Step 5: Run — expect pass**
 
 Run: `pnpm --filter @support-copilot/core test generate/orchestration`
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add .
@@ -2119,13 +2119,13 @@ git commit -m "feat(generate): public answerQuery orchestration"
 - Create: `packages/core/src/eval/types.ts`, `packages/core/src/eval/loader.ts`, `packages/core/src/eval/runner.ts`, `packages/core/src/eval/cli.ts`
 - Create: `packages/core/tests/eval/loader.test.ts`, `packages/core/tests/eval/runner.test.ts`
 
-- [ ] **Step 1: Add YAML dep**
+- [x] **Step 1: Add YAML dep**
 
 ```bash
 pnpm --filter @support-copilot/core add yaml
 ```
 
-- [ ] **Step 2: Write the case schema and loader test**
+- [x] **Step 2: Write the case schema and loader test**
 
 `packages/core/tests/eval/loader.test.ts`:
 
@@ -2167,12 +2167,12 @@ describe("loadCases", () => {
 });
 ```
 
-- [ ] **Step 3: Run — expect failure**
+- [x] **Step 3: Run — expect failure**
 
 Run: `pnpm --filter @support-copilot/core test eval/loader`
 Expected: FAIL.
 
-- [ ] **Step 4: Implement types + loader**
+- [x] **Step 4: Implement types + loader**
 
 `packages/core/src/eval/types.ts`:
 
@@ -2206,12 +2206,12 @@ export async function loadCases(path: string): Promise<EvalCase[]> {
 }
 ```
 
-- [ ] **Step 5: Run — expect pass**
+- [x] **Step 5: Run — expect pass**
 
 Run: `pnpm --filter @support-copilot/core test eval/loader`
 Expected: PASS.
 
-- [ ] **Step 6: Write runner test**
+- [x] **Step 6: Write runner test**
 
 `packages/core/tests/eval/runner.test.ts`:
 
@@ -2282,12 +2282,12 @@ describe("runCases", () => {
 });
 ```
 
-- [ ] **Step 7: Run — expect failure**
+- [x] **Step 7: Run — expect failure**
 
 Run: `pnpm --filter @support-copilot/core test eval/runner`
 Expected: FAIL.
 
-- [ ] **Step 8: Implement `runner.ts`**
+- [x] **Step 8: Implement `runner.ts`**
 
 `packages/core/src/eval/runner.ts`:
 
@@ -2355,12 +2355,12 @@ export async function runCases(
 }
 ```
 
-- [ ] **Step 9: Run — expect pass**
+- [x] **Step 9: Run — expect pass**
 
 Run: `pnpm --filter @support-copilot/core test eval/runner`
 Expected: 2 passing.
 
-- [ ] **Step 10: Implement CLI**
+- [x] **Step 10: Implement CLI**
 
 `packages/core/src/eval/cli.ts`:
 
@@ -2459,7 +2459,7 @@ Add script in `packages/core/package.json`:
 "eval": "tsx src/eval/cli.ts"
 ```
 
-- [ ] **Step 11: Commit**
+- [x] **Step 11: Commit**
 
 ```bash
 git add .
@@ -3268,6 +3268,374 @@ git add .
 git commit -m "docs: architecture diagram, readme polish, loom walkthrough link"
 git tag v0.1.0
 git push --tags
+```
+
+---
+
+## Task 21: Local model adapter (open-source stack)
+
+**Goal:** Add a `MODEL_PROVIDER=local|openai` switch so the entire pipeline (embed, generate, rerank) can run against local open-source models on a 2024 MacBook Pro. No code path is removed; OpenAI/Cohere remains default.
+
+**Stack (Option B — full local, no rerank gap):**
+
+- LLM: `llama.cpp` server, OpenAI-compatible chat completions on `http://localhost:8080/v1`. Model: `Qwen2.5-7B-Instruct-Q4_K_M.gguf` (or `Llama-3.2-3B-Instruct-Q4_K_M` on 16 GB MBPs).
+- Embeddings: Hugging Face Text Embeddings Inference (TEI) serving `BAAI/bge-base-en-v1.5` (768 dims) on `http://localhost:8081`.
+- Reranker: TEI in rerank mode serving `BAAI/bge-reranker-base` on `http://localhost:8082`.
+- Postgres + pgvector unchanged, but embedding column dimension switches from 1536 to **768** when in local mode.
+
+**Files:**
+
+- Create: `packages/core/src/providers/types.ts`, `packages/core/src/providers/openai.ts`, `packages/core/src/providers/local.ts`, `packages/core/src/providers/index.ts`
+- Create: `packages/core/tests/providers/local.test.ts`
+- Update: `packages/core/src/ingest/embed.ts` (or rewire callers to use provider)
+- Update: `packages/core/src/generate/answer.ts` (accept generic chat client matching the provider interface)
+- Update: `packages/core/src/retrieve/rerank.ts` (accept generic reranker matching the provider interface)
+- Update: `packages/core/src/db/schema.ts` (vector dim becomes parameterized via env at startup; defaults to 1536 for OpenAI)
+- Create: `packages/core/migrations/0001_local_dims.sql` (provides ALTER paths)
+- Update: `docker-compose.yml` (add `tei-embed`, `tei-rerank` services; add `llama-cpp` optional service or document host install)
+- Update: `.env.example` (`MODEL_PROVIDER`, `LOCAL_LLM_URL`, `LOCAL_EMBED_URL`, `LOCAL_RERANK_URL`, `LOCAL_EMBED_DIM`)
+- Update: `README.md` (local-stack quickstart)
+
+- [ ] **Step 1: Define provider interface**
+
+`packages/core/src/providers/types.ts`:
+
+```ts
+import type { Answer } from "../generate/answer.js";
+import type { RetrievedChunk } from "../retrieve/vector.js";
+
+export interface ChatProvider {
+  generateAnswer(input: {
+    query: string;
+    chunks: RetrievedChunk[];
+  }): Promise<Answer>;
+}
+
+export interface EmbedProvider {
+  embed(texts: string[]): Promise<number[][]>;
+  dimensions(): number;
+}
+
+export interface RerankProvider {
+  rerank(
+    query: string,
+    chunks: RetrievedChunk[],
+    opts: { topN: number },
+  ): Promise<RetrievedChunk[]>;
+}
+
+export interface ModelProviders {
+  chat: ChatProvider;
+  embed: EmbedProvider;
+  rerank: RerankProvider;
+}
+```
+
+- [ ] **Step 2: Wrap existing OpenAI/Cohere call sites as the OpenAI provider**
+
+`packages/core/src/providers/openai.ts`:
+
+```ts
+import OpenAI from "openai";
+import { CohereClient } from "cohere-ai";
+import { embedTexts } from "../ingest/embed.js";
+import { generateAnswer } from "../generate/answer.js";
+import { rerank as cohereRerank } from "../retrieve/rerank.js";
+import type { ModelProviders } from "./types.js";
+
+export function buildOpenAIProvider(env: NodeJS.ProcessEnv): ModelProviders {
+  const openai = new OpenAI({ apiKey: env.OPENAI_API_KEY });
+  const cohere = new CohereClient({ token: env.COHERE_API_KEY });
+  return {
+    chat: {
+      generateAnswer: ({ query, chunks }) =>
+        generateAnswer({ client: openai, query, chunks }),
+    },
+    embed: {
+      embed: (texts) => embedTexts(texts, { client: openai }),
+      dimensions: () => 1536,
+    },
+    rerank: {
+      rerank: (q, c, opts) => cohereRerank(cohere, q, c, opts),
+    },
+  };
+}
+```
+
+- [ ] **Step 3: Local provider — llama.cpp + TEI**
+
+`packages/core/src/providers/local.ts`:
+
+```ts
+import OpenAI from "openai";
+import { generateAnswer } from "../generate/answer.js";
+import type { RetrievedChunk } from "../retrieve/vector.js";
+import type { ModelProviders } from "./types.js";
+
+interface LocalConfig {
+  llmUrl: string; // e.g. http://localhost:8080/v1
+  embedUrl: string; // TEI embed root, e.g. http://localhost:8081
+  rerankUrl: string; // TEI rerank root, e.g. http://localhost:8082
+  embedDim: number; // e.g. 768
+  llmModel: string; // tag accepted by llama.cpp server, often "default"
+}
+
+export function buildLocalProvider(cfg: LocalConfig): ModelProviders {
+  // llama.cpp serves OpenAI-compatible /v1 — reuse the OpenAI SDK client.
+  const llm = new OpenAI({ apiKey: "local", baseURL: cfg.llmUrl });
+
+  return {
+    chat: {
+      generateAnswer: ({ query, chunks }) =>
+        generateAnswer({
+          client: llm,
+          query,
+          chunks,
+          model: cfg.llmModel,
+        }),
+    },
+    embed: {
+      dimensions: () => cfg.embedDim,
+      embed: async (texts) => {
+        if (texts.length === 0) return [];
+        const res = await fetch(`${cfg.embedUrl}/embed`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ inputs: texts }),
+        });
+        if (!res.ok) throw new Error(`tei embed: ${res.status}`);
+        return (await res.json()) as number[][];
+      },
+    },
+    rerank: {
+      rerank: async (
+        query: string,
+        chunks: RetrievedChunk[],
+        opts: { topN: number },
+      ) => {
+        if (chunks.length === 0) return [];
+        const res = await fetch(`${cfg.rerankUrl}/rerank`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            query,
+            texts: chunks.map((c) => c.text),
+            return_text: false,
+          }),
+        });
+        if (!res.ok) throw new Error(`tei rerank: ${res.status}`);
+        const json = (await res.json()) as { index: number; score: number }[];
+        return json
+          .sort((a, b) => b.score - a.score)
+          .slice(0, opts.topN)
+          .map((r) => ({ ...chunks[r.index]!, score: r.score }));
+      },
+    },
+  };
+}
+```
+
+- [ ] **Step 4: Provider selector**
+
+`packages/core/src/providers/index.ts`:
+
+```ts
+import { buildOpenAIProvider } from "./openai.js";
+import { buildLocalProvider } from "./local.js";
+import type { ModelProviders } from "./types.js";
+
+export function buildProviders(
+  env: NodeJS.ProcessEnv = process.env,
+): ModelProviders {
+  const kind = env.MODEL_PROVIDER ?? "openai";
+  if (kind === "local") {
+    return buildLocalProvider({
+      llmUrl: env.LOCAL_LLM_URL ?? "http://localhost:8080/v1",
+      embedUrl: env.LOCAL_EMBED_URL ?? "http://localhost:8081",
+      rerankUrl: env.LOCAL_RERANK_URL ?? "http://localhost:8082",
+      embedDim: Number(env.LOCAL_EMBED_DIM ?? 768),
+      llmModel: env.LOCAL_LLM_MODEL ?? "default",
+    });
+  }
+  return buildOpenAIProvider(env);
+}
+
+export type { ModelProviders } from "./types.js";
+```
+
+- [ ] **Step 5: Test the local provider with mocked fetch**
+
+`packages/core/tests/providers/local.test.ts`:
+
+```ts
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { buildLocalProvider } from "../../src/providers/local.js";
+
+const cfg = {
+  llmUrl: "http://x/v1",
+  embedUrl: "http://e",
+  rerankUrl: "http://r",
+  embedDim: 768,
+  llmModel: "default",
+};
+
+const realFetch = globalThis.fetch;
+beforeEach(() => {
+  globalThis.fetch = vi.fn() as any;
+});
+afterEach(() => {
+  globalThis.fetch = realFetch;
+});
+
+describe("local embed", () => {
+  it("calls TEI /embed with the inputs", async () => {
+    (globalThis.fetch as any).mockResolvedValue({
+      ok: true,
+      json: async () => [
+        [0.1, 0.2],
+        [0.3, 0.4],
+      ],
+    });
+    const p = buildLocalProvider(cfg);
+    const out = await p.embed.embed(["a", "b"]);
+    expect(out).toEqual([
+      [0.1, 0.2],
+      [0.3, 0.4],
+    ]);
+    const call = (globalThis.fetch as any).mock.calls[0];
+    expect(call[0]).toBe("http://e/embed");
+    expect(JSON.parse(call[1].body).inputs).toEqual(["a", "b"]);
+  });
+
+  it("short-circuits on empty input", async () => {
+    const p = buildLocalProvider(cfg);
+    expect(await p.embed.embed([])).toEqual([]);
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+});
+
+describe("local rerank", () => {
+  it("calls TEI /rerank and reorders", async () => {
+    (globalThis.fetch as any).mockResolvedValue({
+      ok: true,
+      json: async () => [
+        { index: 1, score: 0.9 },
+        { index: 0, score: 0.2 },
+      ],
+    });
+    const p = buildLocalProvider(cfg);
+    const chunks = [
+      {
+        chunkId: 1,
+        documentId: 1,
+        text: "x",
+        score: 0,
+        source: "hybrid" as const,
+      },
+      {
+        chunkId: 2,
+        documentId: 1,
+        text: "y",
+        score: 0,
+        source: "hybrid" as const,
+      },
+    ];
+    const out = await p.rerank.rerank("q", chunks, { topN: 1 });
+    expect(out).toHaveLength(1);
+    expect(out[0]?.chunkId).toBe(2);
+    expect(out[0]?.score).toBeCloseTo(0.9);
+  });
+});
+```
+
+- [ ] **Step 6: Schema parameterization**
+
+The chunk embedding dim must match the active provider. Approach: keep schema literal (1536) for OpenAI, add migration `0001_local_dims.sql` that provides a documented `ALTER` path. Safer: introduce a `provider` column on `documents` for clarity in mixed deployments.
+
+`packages/core/migrations/0001_local_dims.sql`:
+
+```sql
+-- Apply ONLY when switching to local provider with bge-base (768 dims).
+-- Truncate first because the index and vectors are dim-bound.
+TRUNCATE chunks RESTART IDENTITY;
+ALTER TABLE chunks ALTER COLUMN embedding TYPE vector(768);
+DROP INDEX IF EXISTS chunks_embedding_idx;
+CREATE INDEX chunks_embedding_idx ON chunks USING hnsw (embedding vector_cosine_ops);
+```
+
+Document in README:
+
+> Switching providers requires re-ingestion. Run `0001_local_dims.sql` (or its inverse) before `pnpm seed` whenever you change `MODEL_PROVIDER`.
+
+- [ ] **Step 7: Wire provider into eval CLI and Slack app**
+
+Replace direct `embedTexts` / `generateAnswer` / `cohereRerank` constructions in:
+
+- `packages/core/src/eval/cli.ts`
+- `packages/slack-app/src/index.ts`
+- `seed/scripts/seed.ts`
+
+with `buildProviders()` and call `providers.embed.embed`, `providers.chat.generateAnswer`, `providers.rerank.rerank`. Pipeline (`retrieve`, `applyGuard`) stays unchanged.
+
+- [ ] **Step 8: Docker compose services for TEI**
+
+Add to `docker-compose.yml`:
+
+```yaml
+  tei-embed:
+    image: ghcr.io/huggingface/text-embeddings-inference:cpu-latest
+    command: ["--model-id", "BAAI/bge-base-en-v1.5", "--port", "80"]
+    ports:
+      - "8081:80"
+    profiles: ["local"]
+
+  tei-rerank:
+    image: ghcr.io/huggingface/text-embeddings-inference:cpu-latest
+    command: ["--model-id", "BAAI/bge-reranker-base", "--port", "80"]
+    ports:
+      - "8082:80"
+    profiles: ["local"]
+```
+
+(`profiles: ["local"]` keeps them out of default `docker compose up`.)
+
+LLM via host install: `brew install llama.cpp` then `llama-server -m <model.gguf> --port 8080 --host 0.0.0.0 -c 8192 -ngl 999`. Document in README. (Avoid Docker for the LLM on Mac: Docker Desktop on Mac doesn't expose the Metal GPU.)
+
+- [ ] **Step 9: README quickstart**
+
+Add a "Local model stack" section:
+
+```md
+### Local model stack (no API keys required)
+
+1. `brew install llama.cpp huggingface-cli`
+2. `huggingface-cli download Qwen/Qwen2.5-7B-Instruct-GGUF Qwen2.5-7B-Instruct-Q4_K_M.gguf --local-dir ./models`
+3. `llama-server -m ./models/Qwen2.5-7B-Instruct-Q4_K_M.gguf --port 8080 --host 0.0.0.0 -c 8192 -ngl 999`
+4. `docker compose --profile local up -d tei-embed tei-rerank postgres`
+5. `docker compose exec -T postgres psql -U copilot -d copilot < packages/core/migrations/0001_local_dims.sql`
+6. `MODEL_PROVIDER=local LOCAL_EMBED_DIM=768 pnpm seed`
+7. `MODEL_PROVIDER=local LOCAL_EMBED_DIM=768 pnpm --filter @support-copilot/core eval`
+
+Memory budget on a 16 GB M3 MacBook Pro: ~5 GB LLM + ~750 MB embed/rerank + ~500 MB Postgres + ~6 GB OS — comfortable.
+```
+
+- [ ] **Step 10: Run unit tests, then smoke test both providers**
+
+```bash
+pnpm --filter @support-copilot/core test providers/local
+# OpenAI smoke (existing keys):
+MODEL_PROVIDER=openai pnpm --filter @support-copilot/core eval
+# Local smoke:
+MODEL_PROVIDER=local LOCAL_EMBED_DIM=768 pnpm --filter @support-copilot/core eval
+```
+
+Expected: provider unit tests pass; both eval runs report ≥ 25/30. The local stack will typically score 2–4 cases lower than the OpenAI stack — adjust the `mustContain` strings or seed-doc keyword density rather than the eval threshold.
+
+- [ ] **Step 11: Commit**
+
+```bash
+git add .
+git commit -m "feat(providers): pluggable openai|local provider with llama.cpp + tei"
 ```
 
 ---

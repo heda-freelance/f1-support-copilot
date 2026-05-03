@@ -1,0 +1,170 @@
+# 30 evaluation cases for the support copilot.
+# Topics: account-settings (4), billing-faq (4), sso-setup (4),
+# api-rate-limits (4), data-export (3), team-roles (4),
+# integrations-slack (4), troubleshooting (3) — total 25 grounded cases
+# plus 3 must-escalate (out-of-docs) and 2 negative-control gibberish.
+
+# --- account-settings ---
+- id: reset-password-direct
+  query: How do I reset my password?
+  expectedCitationDocs: ["account-settings"]
+  mustContain: ["settings"]
+- id: reset-password-typo
+  query: i forgott my pasword how do i reset
+  expectedCitationDocs: ["account-settings"]
+  mustContain: ["reset"]
+- id: 2fa-setup
+  query: How do I turn on two-factor authentication?
+  expectedCitationDocs: ["account-settings"]
+  mustContain: ["2fa"]
+- id: delete-account
+  query: Can I delete my Acme account myself?
+  expectedCitationDocs: ["account-settings"]
+  mustContain: ["delete"]
+
+# --- billing-faq ---
+- id: billing-cycle
+  query: When does my billing cycle restart?
+  expectedCitationDocs: ["billing-faq"]
+  mustContain: ["monthly"]
+- id: refund-policy
+  query: Can I get a refund for last month?
+  expectedCitationDocs: ["billing-faq"]
+  mustContain: ["refund"]
+- id: plan-tiers
+  query: What pricing plans does Acme offer?
+  expectedCitationDocs: ["billing-faq"]
+  mustContain: ["enterprise"]
+- id: annual-discount
+  query: Is there a discount if I pay yearly?
+  expectedCitationDocs: ["billing-faq"]
+  mustContain: ["annual"]
+
+# --- sso-setup ---
+- id: saml-okta
+  query: How do I set up SAML SSO with Okta?
+  expectedCitationDocs: ["sso-setup"]
+  mustContain: ["okta"]
+- id: sso-cert-error
+  query: I'm getting an INVALID_SIGNATURE error from SSO, what's wrong?
+  expectedCitationDocs: ["sso-setup"]
+  mustContain: ["certificate"]
+- id: sso-which-plans
+  query: Which plans include SSO?
+  expectedCitationDocs: ["sso-setup"]
+  mustContain: ["business"]
+- id: sso-acs-url
+  query: What is the ACS URL I should give my IdP?
+  expectedCitationDocs: ["sso-setup"]
+  mustContain: ["acs"]
+
+# --- api-rate-limits ---
+- id: rate-limit-business
+  query: How many API requests per minute can I make on the Business plan?
+  expectedCitationDocs: ["api-rate-limits"]
+  mustContain: ["1,200"]
+- id: rate-limit-429
+  query: What does a 429 response mean from the API?
+  expectedCitationDocs: ["api-rate-limits"]
+  mustContain: ["rate"]
+- id: backoff-strategy
+  query: How should I retry after I hit the rate limit?
+  expectedCitationDocs: ["api-rate-limits"]
+  mustContain: ["backoff"]
+- id: bulk-endpoint
+  query: How do I do a large batch import without hitting limits?
+  expectedCitationDocs: ["api-rate-limits"]
+  mustContain: ["batch"]
+
+# --- data-export ---
+- id: export-csv
+  query: How do I export my workspace data as CSV?
+  expectedCitationDocs: ["data-export"]
+  mustContain: ["export"]
+- id: export-retention
+  query: How long are export files kept?
+  expectedCitationDocs: ["data-export"]
+  mustContain: ["30 days"]
+- id: gdpr-dpa
+  query: Where can I get a signed DPA for GDPR compliance?
+  expectedCitationDocs: ["data-export"]
+  mustContain: ["dpa"]
+
+# --- team-roles ---
+- id: viewer-permissions
+  query: What can a Viewer do in Acme?
+  expectedCitationDocs: ["team-roles"]
+  mustContain: ["read"]
+- id: change-role
+  query: How do I change a teammate's role to admin?
+  expectedCitationDocs: ["team-roles"]
+  mustContain: ["admin"]
+- id: viewer-billing
+  query: Are Viewer seats billed?
+  expectedCitationDocs: ["team-roles"]
+  mustContain: ["viewer"]
+- id: scim-overwrite
+  query: I changed a role in Acme but it reverted — why?
+  expectedCitationDocs: ["team-roles"]
+  mustContain: ["scim"]
+
+# --- integrations-slack ---
+- id: install-slack
+  query: How do I install the Slack integration?
+  expectedCitationDocs: ["integrations-slack"]
+  mustContain: ["slack"]
+- id: slack-routing
+  query: Can I send different notifications to different Slack channels?
+  expectedCitationDocs: ["integrations-slack"]
+  mustContain: ["channel"]
+- id: slack-uninstall
+  query: How do I remove the Slack integration?
+  expectedCitationDocs: ["integrations-slack"]
+  mustContain: ["uninstall"]
+- id: slack-slash
+  query: What slash commands does the Acme Slack app support?
+  expectedCitationDocs: ["integrations-slack"]
+  mustContain: ["/acme"]
+
+# --- troubleshooting ---
+- id: session-expired
+  query: I keep seeing "session expired" — how do I fix it?
+  expectedCitationDocs: ["troubleshooting"]
+  mustContain: ["log in"]
+- id: api-401
+  query: My API token works in the console but returns 401 in my code
+  expectedCitationDocs: ["troubleshooting"]
+  mustContain: ["bearer"]
+- id: version-conflict
+  query: I get a "version conflict" when saving an item
+  expectedCitationDocs: ["troubleshooting"]
+  mustContain: ["refresh"]
+
+# --- must-escalate (out of docs) ---
+- id: ceo-email
+  query: What is your CEO's email address?
+  expectedCitationDocs: []
+  mustContain: []
+  mustEscalate: true
+- id: notion-roadmap
+  query: Will Acme integrate with Notion next quarter?
+  expectedCitationDocs: []
+  mustContain: []
+  mustEscalate: true
+- id: phone-cancel
+  query: Can someone call me on the phone to cancel my account?
+  expectedCitationDocs: []
+  mustContain: []
+  mustEscalate: true
+
+# --- negative-control gibberish ---
+- id: gibberish-1
+  query: zxcv qwerty floofnard barflump
+  expectedCitationDocs: []
+  mustContain: []
+  mustEscalate: true
+- id: gibberish-2
+  query: ?????
+  expectedCitationDocs: []
+  mustContain: []
+  mustEscalate: true
