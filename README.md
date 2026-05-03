@@ -19,7 +19,7 @@ pnpm --filter @support-copilot/core eval
 
 ## Local model stack (no API keys required)
 
-Run the entire pipeline against open-source models on a 2024 MacBook Pro. Requires ~12 GB free RAM.
+Runs the entire pipeline against open-source GGUF models via three native `llama-server` processes on Apple Silicon. No Docker for inference (TEI's `cpu-latest` image is amd64-only and runs ~5x slower under Rosetta on arm64). Requires ~12 GB free RAM.
 
 1. Install host tools:
 
@@ -27,41 +27,53 @@ Run the entire pipeline against open-source models on a 2024 MacBook Pro. Requir
    brew install llama.cpp huggingface-cli
    ```
 
-2. Download an LLM in GGUF format. Pick by your RAM budget:
+   `huggingface-cli` is deprecated; the `hf` binary is installed alongside it.
+
+2. Download GGUF models. Single-file quants from the bartowski mirrors keep things simple:
 
    ```bash
-   # 7B (recommended on 16 GB+):
-   huggingface-cli download Qwen/Qwen2.5-7B-Instruct-GGUF \
+   # LLM — 7B (recommended on 16 GB+):
+   hf download bartowski/Qwen2.5-7B-Instruct-GGUF \
      Qwen2.5-7B-Instruct-Q4_K_M.gguf --local-dir ./models
 
-   # 3B (lighter, faster):
-   huggingface-cli download bartowski/Llama-3.2-3B-Instruct-GGUF \
-     Llama-3.2-3B-Instruct-Q4_K_M.gguf --local-dir ./models
+   # Embeddings — bge-base-en-v1.5 (768 dims):
+   hf download CompendiumLabs/bge-base-en-v1.5-gguf \
+     bge-base-en-v1.5-q8_0.gguf --local-dir ./models
+
+   # Reranker — bge-reranker-v2-m3:
+   hf download gpustack/bge-reranker-v2-m3-GGUF \
+     bge-reranker-v2-m3-Q8_0.gguf --local-dir ./models
    ```
 
-3. Start the LLM server (uses Metal GPU on Apple Silicon):
+   The official `Qwen/Qwen2.5-7B-Instruct-GGUF` repo ships sharded quants (`...-q4_k_m-00001-of-00002.gguf` etc); the bartowski mirror keeps a single-file Q4_K_M which is simpler.
+
+3. Start three `llama-server` processes (each in its own terminal — uses Metal on Apple Silicon):
 
    ```bash
+   # LLM on :8080 (OpenAI-compatible /v1/chat/completions)
    llama-server -m ./models/Qwen2.5-7B-Instruct-Q4_K_M.gguf \
      --port 8080 --host 0.0.0.0 -c 8192 -ngl 999
+
+   # Embeddings on :8081 (OpenAI-compatible /v1/embeddings)
+   llama-server -m ./models/bge-base-en-v1.5-q8_0.gguf \
+     --embedding --port 8081 --host 0.0.0.0 -ngl 999
+
+   # Reranker on :8082 (/v1/rerank)
+   llama-server -m ./models/bge-reranker-v2-m3-Q8_0.gguf \
+     --reranking --port 8082 --host 0.0.0.0 -ngl 999
    ```
 
-4. Start the TEI embedder + reranker + Postgres:
+4. Start Postgres and apply migrations (switch `chunks.embedding` from 1536 → 768):
 
    ```bash
-   docker compose --profile local up -d tei-embed tei-rerank postgres
-   ```
-
-5. Apply the local-dimensions migration (switches the `chunks.embedding` column from 1536 → 768):
-
-   ```bash
+   docker compose up -d postgres
    docker compose exec -T postgres psql -U copilot -d copilot \
      < packages/core/migrations/0000_init.sql
    docker compose exec -T postgres psql -U copilot -d copilot \
      < packages/core/migrations/0001_local_dims.sql
    ```
 
-6. Seed and evaluate:
+5. Seed and evaluate:
 
    ```bash
    export MODEL_PROVIDER=local
@@ -73,4 +85,4 @@ Run the entire pipeline against open-source models on a 2024 MacBook Pro. Requir
 
 Switching providers requires re-ingestion. Run `0001_local_dims.sql` (or the inverse `0001_openai_dims.sql`) and re-`pnpm seed` whenever you change `MODEL_PROVIDER`.
 
-Memory budget on a 16 GB M3 MacBook Pro: ~5 GB LLM + ~750 MB embed/rerank + ~500 MB Postgres + ~6 GB OS — comfortable.
+Memory budget on a 16 GB M3 MacBook Pro: ~5 GB LLM + ~600 MB embed + ~600 MB rerank + ~500 MB Postgres + ~6 GB OS — comfortable.

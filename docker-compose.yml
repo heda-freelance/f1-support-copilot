@@ -15,28 +15,10 @@ services:
       timeout: 5s
       retries: 5
 
-  tei-embed:
-    image: ghcr.io/huggingface/text-embeddings-inference:cpu-latest
-    command: ["--model-id", "BAAI/bge-base-en-v1.5", "--port", "80"]
-    ports:
-      - "8081:80"
-    volumes:
-      - tei-models:/data
-    environment:
-      HF_HUB_CACHE: /data
-    profiles: ["local"]
-
-  tei-rerank:
-    image: ghcr.io/huggingface/text-embeddings-inference:cpu-latest
-    command: ["--model-id", "BAAI/bge-reranker-base", "--port", "80"]
-    ports:
-      - "8082:80"
-    volumes:
-      - tei-models:/data
-    environment:
-      HF_HUB_CACHE: /data
-    profiles: ["local"]
+  # Local embedding and reranker run on the host via llama.cpp
+  # for native arm64 performance (TEI's ghcr image is amd64-only).
+  # See README "Local model stack" section for the three llama-server
+  # invocations and required GGUF model downloads.
 
 volumes:
   pgdata:
-  tei-models:

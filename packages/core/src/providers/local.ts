@@ -5,14 +5,17 @@ import type { ModelProviders } from "./types.js";
 
 export interface LocalConfig {
   llmUrl: string;
-  embedUrl: string;
-  rerankUrl: string;
-  embedDim: number;
   llmModel: string;
+  embedUrl: string;
+  embedModel: string;
+  embedDim: number;
+  rerankUrl: string;
+  rerankModel: string;
 }
 
 export function buildLocalProvider(cfg: LocalConfig): ModelProviders {
   const llm = new OpenAI({ apiKey: "local", baseURL: cfg.llmUrl });
+  const embedClient = new OpenAI({ apiKey: "local", baseURL: cfg.embedUrl });
 
   return {
     chat: {
@@ -28,13 +31,17 @@ export function buildLocalProvider(cfg: LocalConfig): ModelProviders {
       dimensions: () => cfg.embedDim,
       embed: async (texts) => {
         if (texts.length === 0) return [];
-        const res = await fetch(`${cfg.embedUrl}/embed`, {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ inputs: texts }),
-        });
-        if (!res.ok) throw new Error(`tei embed: ${res.status}`);
-        return (await res.json()) as number[][];
+        const out: number[][] = [];
+        for (let i = 0; i < texts.length; i += 64) {
+          const batch = texts.slice(i, i + 64);
+          const res = await embedClient.embeddings.create({
+            model: cfg.embedModel,
+            input: batch,
+            encoding_format: "float",
+          });
+          for (const item of res.data) out.push(item.embedding as number[]);
+        }
+        return out;
       },
     },
     rerank: {
@@ -44,21 +51,26 @@ export function buildLocalProvider(cfg: LocalConfig): ModelProviders {
         opts: { topN: number },
       ) => {
         if (chunks.length === 0) return [];
-        const res = await fetch(`${cfg.rerankUrl}/rerank`, {
+        const res = await fetch(`${cfg.rerankUrl}/v1/rerank`, {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
+            model: cfg.rerankModel,
             query,
-            texts: chunks.map((c) => c.text),
-            return_text: false,
+            documents: chunks.map((c) => c.text),
           }),
         });
-        if (!res.ok) throw new Error(`tei rerank: ${res.status}`);
-        const json = (await res.json()) as { index: number; score: number }[];
-        return json
-          .sort((a, b) => b.score - a.score)
+        if (!res.ok) throw new Error(`llama.cpp rerank: ${res.status}`);
+        const json = (await res.json()) as {
+          results: { index: number; relevance_score: number }[];
+        };
+        return json.results
+          .sort((a, b) => b.relevance_score - a.relevance_score)
           .slice(0, opts.topN)
-          .map((r) => ({ ...chunks[r.index]!, score: r.score }));
+          .map((r) => ({
+            ...chunks[r.index]!,
+            score: r.relevance_score,
+          }));
       },
     },
   };

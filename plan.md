@@ -2476,7 +2476,7 @@ git commit -m "feat(eval): yaml-driven eval harness with cli reporter"
 - Create: `seed/scripts/seed.ts`
 - Create: `eval/cases.yaml` (30 cases)
 
-- [ ] **Step 1: Author 8 sanitized "Acme SaaS" help docs**
+- [x] **Step 1: Author 8 sanitized "Acme SaaS" help docs**
 
 For each file under `seed/docs/`, write 200–400 words of realistic help content. Topics:
 
@@ -2491,7 +2491,7 @@ For each file under `seed/docs/`, write 200–400 words of realistic help conten
 
 Each file starts with `# <Title>` and uses normal Markdown.
 
-- [ ] **Step 2: Write seed script**
+- [x] **Step 2: Write seed script**
 
 `seed/scripts/seed.ts`:
 
@@ -2532,7 +2532,7 @@ Add to root `package.json`:
 }
 ```
 
-- [ ] **Step 3: Author 30 eval cases**
+- [x] **Step 3: Author 30 eval cases**
 
 `eval/cases.yaml`:
 
@@ -2583,7 +2583,7 @@ pnpm --filter @support-copilot/core eval
 
 Expected: report shows ≥ 27/30 passing on first calibrated run. If lower, iterate `seed/docs` content (clarity, keyword coverage) and chunk size, not the eval cases.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add .
@@ -3278,10 +3278,12 @@ git push --tags
 
 **Stack (Option B — full local, no rerank gap):**
 
-- LLM: `llama.cpp` server, OpenAI-compatible chat completions on `http://localhost:8080/v1`. Model: `Qwen2.5-7B-Instruct-Q4_K_M.gguf` (or `Llama-3.2-3B-Instruct-Q4_K_M` on 16 GB MBPs).
-- Embeddings: Hugging Face Text Embeddings Inference (TEI) serving `BAAI/bge-base-en-v1.5` (768 dims) on `http://localhost:8081`.
-- Reranker: TEI in rerank mode serving `BAAI/bge-reranker-base` on `http://localhost:8082`.
+- LLM: `llama-server` (llama.cpp), OpenAI-compatible `/v1/chat/completions` on `http://localhost:8080/v1`. Model: `Qwen2.5-7B-Instruct-Q4_K_M.gguf` (or `Llama-3.2-3B-Instruct-Q4_K_M` on 16 GB MBPs).
+- Embeddings: a second `llama-server --embedding` instance serving `bge-base-en-v1.5` (768 dims) on `http://localhost:8081/v1`. OpenAI-compatible `/v1/embeddings`.
+- Reranker: a third `llama-server --reranking` instance serving `bge-reranker-v2-m3` on `http://localhost:8082`, exposing `/v1/rerank`.
 - Postgres + pgvector unchanged, but embedding column dimension switches from 1536 to **768** when in local mode.
+
+> Earlier draft used Hugging Face TEI in Docker for embed/rerank. The official ghcr image (`text-embeddings-inference:cpu-latest`) is amd64-only and runs ~5x slower under Rosetta on arm64 MacBooks, so the implementation switched to three native `llama-server` processes. No Docker for inference.
 
 **Files:**
 
@@ -3582,19 +3584,19 @@ with `buildProviders()` and call `providers.embed.embed`, `providers.chat.genera
 Add to `docker-compose.yml`:
 
 ```yaml
-  tei-embed:
-    image: ghcr.io/huggingface/text-embeddings-inference:cpu-latest
-    command: ["--model-id", "BAAI/bge-base-en-v1.5", "--port", "80"]
-    ports:
-      - "8081:80"
-    profiles: ["local"]
+tei-embed:
+  image: ghcr.io/huggingface/text-embeddings-inference:cpu-latest
+  command: ["--model-id", "BAAI/bge-base-en-v1.5", "--port", "80"]
+  ports:
+    - "8081:80"
+  profiles: ["local"]
 
-  tei-rerank:
-    image: ghcr.io/huggingface/text-embeddings-inference:cpu-latest
-    command: ["--model-id", "BAAI/bge-reranker-base", "--port", "80"]
-    ports:
-      - "8082:80"
-    profiles: ["local"]
+tei-rerank:
+  image: ghcr.io/huggingface/text-embeddings-inference:cpu-latest
+  command: ["--model-id", "BAAI/bge-reranker-base", "--port", "80"]
+  ports:
+    - "8082:80"
+  profiles: ["local"]
 ```
 
 (`profiles: ["local"]` keeps them out of default `docker compose up`.)

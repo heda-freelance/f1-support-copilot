@@ -9,10 +9,12 @@ export function buildProviders(
   if (kind === "local") {
     return buildLocalProvider({
       llmUrl: env.LOCAL_LLM_URL ?? "http://localhost:8080/v1",
-      embedUrl: env.LOCAL_EMBED_URL ?? "http://localhost:8081",
-      rerankUrl: env.LOCAL_RERANK_URL ?? "http://localhost:8082",
-      embedDim: Number(env.LOCAL_EMBED_DIM ?? 768),
       llmModel: env.LOCAL_LLM_MODEL ?? "default",
+      embedUrl: env.LOCAL_EMBED_URL ?? "http://localhost:8081/v1",
+      embedModel: env.LOCAL_EMBED_MODEL ?? "default",
+      embedDim: Number(env.LOCAL_EMBED_DIM ?? 768),
+      rerankUrl: env.LOCAL_RERANK_URL ?? "http://localhost:8082",
+      rerankModel: env.LOCAL_RERANK_MODEL ?? "default",
     });
   }
   return buildOpenAIProvider(env);
