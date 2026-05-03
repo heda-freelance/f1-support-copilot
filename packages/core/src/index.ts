@@ -7,3 +7,4 @@ export * from "./retrieve/vector.js";
 export * from "./retrieve/bm25.js";
 export * from "./retrieve/rerank.js";
 export * from "./generate/index.js";
+export * from "./providers/index.js";

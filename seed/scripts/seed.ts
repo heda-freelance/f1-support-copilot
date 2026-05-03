@@ -1,12 +1,15 @@
 import { readFile, readdir } from "node:fs/promises";
 import { join, basename, extname } from "node:path";
-import { ingestDocument } from "@support-copilot/core";
-import { createDbClient } from "@support-copilot/core";
-import { embedTexts } from "@support-copilot/core";
+import {
+  ingestDocument,
+  createDbClient,
+  buildProviders,
+} from "@support-copilot/core";
 import { sql } from "drizzle-orm";
 
 async function main() {
   const db = createDbClient(process.env.DATABASE_URL!);
+  const providers = buildProviders();
   await db.execute(sql`TRUNCATE documents RESTART IDENTITY CASCADE`);
 
   const dir = "seed/docs";
@@ -15,7 +18,12 @@ async function main() {
     const content = await readFile(join(dir, f), "utf8");
     const id = await ingestDocument(
       { source: `seed/${f}`, format: "markdown", content },
-      { db, embed: (texts) => embedTexts(texts), maxTokens: 400, overlap: 60 },
+      {
+        db,
+        embed: (texts) => providers.embed.embed(texts),
+        maxTokens: 400,
+        overlap: 60,
+      },
     );
     console.log(`seeded ${basename(f)} → doc ${id}`);
   }
