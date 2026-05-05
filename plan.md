@@ -2635,23 +2635,29 @@ git commit -m "feat(seed,eval): 8 sanitized help docs and 30 evaluation cases"
 }
 ```
 
+Drop the direct `openai` and `cohere-ai` deps; the Slack app talks to whichever provider is selected at runtime through `@support-copilot/core`.
+
+```json
+"dependencies": {
+  "@slack/bolt": "^3.18.0",
+  "@support-copilot/core": "workspace:*"
+}
+```
+
 - [ ] **Step 2: Implement the Bolt app**
 
 `packages/slack-app/src/index.ts`:
 
 ```ts
 import bolt from "@slack/bolt";
-import OpenAI from "openai";
-import { CohereClient } from "cohere-ai";
 import {
   createDbClient,
-  embedTexts,
+  closeDb,
   vectorSearch,
   bm25Search,
-  rerank,
   retrieve,
-  generateAnswer,
   applyGuard,
+  buildProviders,
 } from "@support-copilot/core";
 
 const { App } = bolt;
@@ -2662,8 +2668,7 @@ const app = new App({
 });
 
 const db = createDbClient(process.env.DATABASE_URL!);
-const openai = new OpenAI();
-const cohere = new CohereClient({ token: process.env.COHERE_API_KEY });
+const providers = buildProviders();
 
 app.event("app_mention", async ({ event, say }) => {
   const query = event.text.replace(/<@[^>]+>/g, "").trim();
@@ -2676,16 +2681,18 @@ app.event("app_mention", async ({ event, say }) => {
   }
 
   const chunks = await retrieve(query, {
-    embedQuery: async (q) => (await embedTexts([q]))[0]!,
+    embedQuery: async (q) => (await providers.embed.embed([q]))[0]!,
     vectorSearch: (vec, opts) => vectorSearch(db, vec, opts),
     bm25Search: (q, opts) => bm25Search(db, q, opts),
-    rerank: (q, c, opts) => rerank(cohere, q, c, opts),
+    rerank: (q, c, opts) => providers.rerank.rerank(q, c, opts),
     candidatePool: 20,
     topN: 6,
   });
 
-  const raw = await generateAnswer({ client: openai, query, chunks });
-  const guarded = applyGuard(raw, chunks, { minConfidence: 0.5 });
+  const raw = await providers.chat.generateAnswer({ query, chunks });
+  const guarded = applyGuard(raw, chunks, {
+    minConfidence: providers.minConfidence,
+  });
 
   const citationLines = guarded.citations
     .map((c) => `> [${c.chunkId}] ${c.quote}`)
@@ -2702,7 +2709,12 @@ app.start(port).then(() => console.log(`slack-app listening on :${port}`));
 - [ ] **Step 3: Smoke run locally**
 
 ```bash
-pnpm --filter @support-copilot/slack-app start
+# OpenAI provider (default)
+MODEL_PROVIDER=openai pnpm --filter @support-copilot/slack-app start
+
+# Local provider (requires the three llama-server processes from Task 21)
+MODEL_PROVIDER=local LOCAL_EMBED_DIM=768 \
+  pnpm --filter @support-copilot/slack-app start
 ```
 
 Expected: console shows `slack-app listening on :3000`. Use `ngrok http 3000` and configure Slack App `Event Subscriptions` Request URL to validate.
@@ -2741,9 +2753,7 @@ git commit -m "feat(slack-app): @-mention answer flow with citations"
     "next": "^14.2.0",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
-    "@support-copilot/core": "workspace:*",
-    "openai": "^4.50.0",
-    "cohere-ai": "^7.10.0"
+    "@support-copilot/core": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "^18.3.0",
@@ -2779,22 +2789,17 @@ export default { reactStrictMode: true };
 
 ```ts
 import { NextResponse } from "next/server";
-import OpenAI from "openai";
-import { CohereClient } from "cohere-ai";
 import {
   createDbClient,
-  embedTexts,
   vectorSearch,
   bm25Search,
-  rerank,
   retrieve,
-  generateAnswer,
   applyGuard,
+  buildProviders,
 } from "@support-copilot/core";
 
 const db = createDbClient(process.env.DATABASE_URL!);
-const openai = new OpenAI();
-const cohere = new CohereClient({ token: process.env.COHERE_API_KEY });
+const providers = buildProviders();
 
 export async function POST(req: Request) {
   const { query } = (await req.json()) as { query: string };
@@ -2802,16 +2807,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "query required" }, { status: 400 });
 
   const chunks = await retrieve(query, {
-    embedQuery: async (q) => (await embedTexts([q]))[0]!,
+    embedQuery: async (q) => (await providers.embed.embed([q]))[0]!,
     vectorSearch: (vec, opts) => vectorSearch(db, vec, opts),
     bm25Search: (q, opts) => bm25Search(db, q, opts),
-    rerank: (q, c, opts) => rerank(cohere, q, c, opts),
+    rerank: (q, c, opts) => providers.rerank.rerank(q, c, opts),
     candidatePool: 20,
     topN: 6,
   });
 
-  const raw = await generateAnswer({ client: openai, query, chunks });
-  const guarded = applyGuard(raw, chunks, { minConfidence: 0.5 });
+  const raw = await providers.chat.generateAnswer({ query, chunks });
+  const guarded = applyGuard(raw, chunks, {
+    minConfidence: providers.minConfidence,
+  });
 
   return NextResponse.json({
     answer: guarded.answer,
@@ -2951,10 +2958,15 @@ export default function Home() {
 - [ ] **Step 4: Smoke test locally**
 
 ```bash
-pnpm --filter @support-copilot/web dev
+# OpenAI provider (default)
+MODEL_PROVIDER=openai pnpm --filter @support-copilot/web dev
+
+# Local provider — requires Task 21's three llama-server processes
+MODEL_PROVIDER=local LOCAL_EMBED_DIM=768 \
+  pnpm --filter @support-copilot/web dev
 ```
 
-Open http://localhost:3001, ask a seeded question, verify response.
+Open http://localhost:3001, ask a seeded question, verify response. The same UI works for both providers; only the seed/migration step differs (`0001_local_dims.sql` vs `0001_openai_dims.sql`).
 
 - [ ] **Step 5: Commit**
 
@@ -2966,6 +2978,8 @@ git commit -m "feat(web): nextjs demo widget with /api/ask"
 ---
 
 ## Task 19: GitHub Actions — unit tests + eval gate
+
+CI exercises both provider code paths (the local provider's HTTP layer is unit-tested with mocked `fetch`, so no real GPU is required), but only the **OpenAI** provider runs the full eval gate. Running real local inference (7B Qwen + bge embed/rerank) on free GitHub-hosted runners is impractical: 4 GB RAM, no GPU, ~30 s/token throughput. Local-stack validation is a developer/manual step (see Task 21 Step 10).
 
 **Files:**
 
@@ -2997,6 +3011,8 @@ jobs:
           --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
     env:
       DATABASE_URL: postgres://copilot:copilot@localhost:5432/copilot
+      # The local provider's embed/rerank/chat paths are exercised via mocked
+      # fetch in tests/providers/local.test.ts — no real services needed.
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v3
@@ -3009,6 +3025,8 @@ jobs:
 ```
 
 - [ ] **Step 2: Write the eval workflow**
+
+This job runs the full OpenAI-backed eval (real LLM calls) gated on repo secrets. It does not run the local stack — see the note at the top of this task.
 
 `.github/workflows/eval.yml`:
 
@@ -3033,6 +3051,7 @@ jobs:
         options: >-
           --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
     env:
+      MODEL_PROVIDER: openai
       DATABASE_URL: postgres://copilot:copilot@localhost:5432/copilot
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
@@ -3045,7 +3064,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: docker run --rm --network host -v $PWD/packages/core/migrations:/m postgres:16 psql "$DATABASE_URL" -f /m/0000_init.sql
       - run: pnpm seed
-      - run: pnpm --filter @support-copilot/core eval
+      - run: pnpm eval
       - uses: actions/upload-artifact@v4
         with: { name: eval-report, path: eval/report.json }
 ```
@@ -3075,6 +3094,8 @@ git commit -m "ci: unit test workflow and eval-gated workflow"
 ---
 
 ## Task 20: Deploy to Railway
+
+The Railway deploy ships the **OpenAI** provider only. Hosting the local stack (llama.cpp + two TEI/embed/rerank servers) on Railway requires GPU plans and undermines the portfolio cost story. Local mode stays a dev/self-host option documented in the README and validated manually per Task 21 Step 10. Railway services set `MODEL_PROVIDER=openai` explicitly in their env.
 
 **Files:**
 
@@ -3121,7 +3142,7 @@ CMD ["pnpm", "--filter", "@support-copilot/slack-app", "start"]
 
 - [ ] **Step 4: Configure Railway services**
 
-- Service "web": connect GitHub repo, root directory `.`, dockerfile `packages/web/Dockerfile`. Env vars: `DATABASE_URL` (from Postgres plugin), `OPENAI_API_KEY`, `COHERE_API_KEY`.
+- Service "web": connect GitHub repo, root directory `.`, dockerfile `packages/web/Dockerfile`. Env vars: `MODEL_PROVIDER=openai`, `DATABASE_URL` (from Postgres plugin), `OPENAI_API_KEY`, `COHERE_API_KEY`.
 - Service "slack-app": same, dockerfile `packages/slack-app/Dockerfile`. Env vars: same plus `SLACK_BOT_TOKEN`, `SLACK_SIGNING_SECRET`.
 
 - [ ] **Step 5: Run migration on Railway Postgres**
@@ -3146,10 +3167,12 @@ Open the public web URL, run a query against the seeded "Acme SaaS" docs. Verify
 ```md
 ## Deploy
 
-Web: https://support-copilot-web.up.railway.app
+Web: https://support-copilot-web.up.railway.app  (OpenAI provider)
 Slack: install via [this link](https://...)
 
-Local dev:
+The hosted demo runs the OpenAI provider only. To run with the open-source local stack, follow the "Local model stack" section above — it does not require any external API keys.
+
+Local dev (OpenAI):
 \`\`\`bash
 docker compose up -d postgres
 psql "$DATABASE_URL" -f packages/core/migrations/0000_init.sql
@@ -3163,111 +3186,6 @@ pnpm --filter @support-copilot/web dev
 ```bash
 git add .
 git commit -m "deploy: dockerfiles and railway config; seeded production demo"
-```
-
----
-
-## Task 21: Architecture diagram, README polish, Loom recording
-
-**Files:**
-
-- Create: `docs/architecture.md`, `docs/architecture.png` (or `.svg`)
-- Update: `README.md` (full)
-
-- [ ] **Step 1: Draw the architecture diagram**
-
-Use Excalidraw or `mermaid` in `docs/architecture.md`:
-
-```mermaid
-flowchart LR
-  Q[User Query] --> EQ[Embed Query]
-  Q --> KW[BM25 Search]
-  EQ --> VS[Vector Search<br/>pgvector cosine]
-  KW --> RRF[RRF Merge]
-  VS --> RRF
-  RRF --> RR[Cohere Rerank]
-  RR --> GEN[gpt-4o-mini<br/>structured output]
-  GEN --> GUARD[Hallucination Guard<br/>citation + confidence]
-  GUARD --> A[Answer + Citations]
-  GUARD -. low conf .-> ESC[Escalate]
-```
-
-Add 1-paragraph explanation per stage.
-
-- [ ] **Step 2: Write full README**
-
-Replace `README.md` with:
-
-```md
-# Support Copilot
-
-A production-grade RAG support bot for B2B SaaS — answers tier-1 tickets from your help docs with citations, escalates when unsure, all under a CI-checked eval harness.
-
-**Live demo:** https://support-copilot-web.up.railway.app
-**Architecture:** see [docs/architecture.md](docs/architecture.md)
-**Eval results:** 30/30 cases must pass on every PR — see Actions tab
-
-## Why this exists
-
-Most "support GPT" demos hallucinate. This one does not, because every answer is gated by:
-
-1. Hybrid retrieval (BM25 + vector) plus Cohere rerank
-2. Structured-output JSON with explicit citations
-3. A guard layer that verifies each cited quote appears verbatim in the cited chunk
-4. A 30-case eval suite that runs in CI on every PR — regressions fail the build
-
-## Stack
-
-Node.js 20, TypeScript, Postgres + pgvector, Drizzle, OpenAI, Cohere, @slack/bolt, Next.js, Vitest, Railway.
-
-## Local setup
-
-\`\`\`bash
-pnpm install
-docker compose up -d postgres
-psql "$DATABASE_URL" -f packages/core/migrations/0000_init.sql
-pnpm seed
-pnpm --filter @support-copilot/web dev # web demo on :3001
-pnpm --filter @support-copilot/slack-app start # slack on :3000
-\`\`\`
-
-## Tests and evals
-
-\`\`\`bash
-pnpm test # vitest unit + integration
-pnpm --filter @support-copilot/core eval # 30 case suite
-\`\`\`
-
-## License
-
-MIT.
-```
-
-- [ ] **Step 3: Record Loom (5 min)**
-
-Script:
-
-1. (0:00–0:30) Problem framing — "tier-1 support, hallucination risk, citation requirement."
-2. (0:30–1:30) Architecture walkthrough on `docs/architecture.md`.
-3. (1:30–3:00) Live demo on Railway URL: ask a known question, show citations + confidence; ask an unknowable question, show escalation; ask a tricky multi-doc question.
-4. (3:00–4:00) Eval harness — run `pnpm --filter @support-copilot/core eval`, show 30 passing.
-5. (4:00–5:00) Repo walkthrough — point at `guard.ts`, `hybrid.ts`, eval workflow file.
-
-Upload Loom, copy public link.
-
-- [ ] **Step 4: Add Loom link to README**
-
-```md
-**Walkthrough:** [5-min Loom](paste-link)
-```
-
-- [ ] **Step 5: Commit and tag**
-
-```bash
-git add .
-git commit -m "docs: architecture diagram, readme polish, loom walkthrough link"
-git tag v0.1.0
-git push --tags
 ```
 
 ---
@@ -3298,7 +3216,7 @@ git push --tags
 - Update: `.env.example` (`MODEL_PROVIDER`, `LOCAL_LLM_URL`, `LOCAL_EMBED_URL`, `LOCAL_RERANK_URL`, `LOCAL_EMBED_DIM`)
 - Update: `README.md` (local-stack quickstart)
 
-- [ ] **Step 1: Define provider interface**
+- [x] **Step 1: Define provider interface**
 
 `packages/core/src/providers/types.ts`:
 
@@ -3333,7 +3251,7 @@ export interface ModelProviders {
 }
 ```
 
-- [ ] **Step 2: Wrap existing OpenAI/Cohere call sites as the OpenAI provider**
+- [x] **Step 2: Wrap existing OpenAI/Cohere call sites as the OpenAI provider**
 
 `packages/core/src/providers/openai.ts`:
 
@@ -3364,7 +3282,7 @@ export function buildOpenAIProvider(env: NodeJS.ProcessEnv): ModelProviders {
 }
 ```
 
-- [ ] **Step 3: Local provider — llama.cpp + TEI**
+- [x] **Step 3: Local provider — llama.cpp + TEI**
 
 `packages/core/src/providers/local.ts`:
 
@@ -3437,7 +3355,7 @@ export function buildLocalProvider(cfg: LocalConfig): ModelProviders {
 }
 ```
 
-- [ ] **Step 4: Provider selector**
+- [x] **Step 4: Provider selector**
 
 `packages/core/src/providers/index.ts`:
 
@@ -3465,7 +3383,7 @@ export function buildProviders(
 export type { ModelProviders } from "./types.js";
 ```
 
-- [ ] **Step 5: Test the local provider with mocked fetch**
+- [x] **Step 5: Test the local provider with mocked fetch**
 
 `packages/core/tests/providers/local.test.ts`:
 
@@ -3550,7 +3468,7 @@ describe("local rerank", () => {
 });
 ```
 
-- [ ] **Step 6: Schema parameterization**
+- [x] **Step 6: Schema parameterization**
 
 The chunk embedding dim must match the active provider. Approach: keep schema literal (1536) for OpenAI, add migration `0001_local_dims.sql` that provides a documented `ALTER` path. Safer: introduce a `provider` column on `documents` for clarity in mixed deployments.
 
@@ -3569,7 +3487,7 @@ Document in README:
 
 > Switching providers requires re-ingestion. Run `0001_local_dims.sql` (or its inverse) before `pnpm seed` whenever you change `MODEL_PROVIDER`.
 
-- [ ] **Step 7: Wire provider into eval CLI and Slack app**
+- [x] **Step 7: Wire provider into eval CLI and Slack app**
 
 Replace direct `embedTexts` / `generateAnswer` / `cohereRerank` constructions in:
 
@@ -3579,7 +3497,7 @@ Replace direct `embedTexts` / `generateAnswer` / `cohereRerank` constructions in
 
 with `buildProviders()` and call `providers.embed.embed`, `providers.chat.generateAnswer`, `providers.rerank.rerank`. Pipeline (`retrieve`, `applyGuard`) stays unchanged.
 
-- [ ] **Step 8: Docker compose services for TEI**
+- [x] **Step 8: Docker compose services for TEI**
 
 Add to `docker-compose.yml`:
 
@@ -3603,7 +3521,7 @@ tei-rerank:
 
 LLM via host install: `brew install llama.cpp` then `llama-server -m <model.gguf> --port 8080 --host 0.0.0.0 -c 8192 -ngl 999`. Document in README. (Avoid Docker for the LLM on Mac: Docker Desktop on Mac doesn't expose the Metal GPU.)
 
-- [ ] **Step 9: README quickstart**
+- [x] **Step 9: README quickstart**
 
 Add a "Local model stack" section:
 
@@ -3621,7 +3539,7 @@ Add a "Local model stack" section:
 Memory budget on a 16 GB M3 MacBook Pro: ~5 GB LLM + ~750 MB embed/rerank + ~500 MB Postgres + ~6 GB OS — comfortable.
 ```
 
-- [ ] **Step 10: Run unit tests, then smoke test both providers**
+- [x] **Step 10: Run unit tests, then smoke test both providers**
 
 ```bash
 pnpm --filter @support-copilot/core test providers/local
@@ -3633,11 +3551,144 @@ MODEL_PROVIDER=local LOCAL_EMBED_DIM=768 pnpm --filter @support-copilot/core eva
 
 Expected: provider unit tests pass; both eval runs report ≥ 25/30. The local stack will typically score 2–4 cases lower than the OpenAI stack — adjust the `mustContain` strings or seed-doc keyword density rather than the eval threshold.
 
-- [ ] **Step 11: Commit**
+- [x] **Step 11: Commit**
 
 ```bash
 git add .
 git commit -m "feat(providers): pluggable openai|local provider with llama.cpp + tei"
+```
+
+---
+
+## Task 22: Architecture diagram, README polish, Loom recording
+
+**Files:**
+
+- Create: `docs/architecture.md`, `docs/architecture.png` (or `.svg`)
+- Update: `README.md` (full)
+
+- [ ] **Step 1: Draw the architecture diagram**
+
+Use Excalidraw or `mermaid` in `docs/architecture.md`:
+
+```mermaid
+flowchart LR
+  Q[User Query] --> EQ[Embed Query]
+  Q --> KW[BM25 Search]
+  EQ --> VS[Vector Search<br/>pgvector cosine]
+  KW --> RRF[RRF Merge]
+  VS --> RRF
+  RRF --> RR[Rerank]
+  RR --> GEN[Chat completion<br/>structured output]
+  GEN --> GUARD[Hallucination Guard<br/>citation + confidence]
+  GUARD --> A[Answer + Citations]
+  GUARD -. low conf .-> ESC[Escalate]
+
+  subgraph "MODEL_PROVIDER=openai"
+    EQ_OAI[OpenAI text-embedding-3-small<br/>1536 dims]
+    RR_COH[Cohere rerank-english-v3]
+    GEN_OAI[OpenAI gpt-4o-mini]
+  end
+
+  subgraph "MODEL_PROVIDER=local (no API keys)"
+    EQ_LOC[llama-server --embedding<br/>bge-base-en-v1.5 / 768 dims]
+    RR_LOC[llama-server --reranking<br/>bge-reranker-v2-m3]
+    GEN_LOC[llama-server<br/>Qwen2.5-7B-Instruct Q4_K_M]
+  end
+
+  EQ -.openai.-> EQ_OAI
+  EQ -.local.-> EQ_LOC
+  RR -.openai.-> RR_COH
+  RR -.local.-> RR_LOC
+  GEN -.openai.-> GEN_OAI
+  GEN -.local.-> GEN_LOC
+```
+
+Add 1-paragraph explanation per stage. Call out that the embed/rerank/chat boxes are abstracted behind `ModelProviders` (see `packages/core/src/providers/`) so the same retrieval and guard pipeline runs unchanged against either lane.
+
+- [ ] **Step 2: Write full README**
+
+Replace `README.md` with:
+
+```md
+# Support Copilot
+
+A production-grade RAG support bot for B2B SaaS — answers tier-1 tickets from your help docs with citations, escalates when unsure, all under a CI-checked eval harness.
+
+**Live demo:** https://support-copilot-web.up.railway.app
+**Architecture:** see [docs/architecture.md](docs/architecture.md)
+**Eval results:** 30/30 cases must pass on every PR — see Actions tab
+
+## Why this exists
+
+Most "support GPT" demos hallucinate. This one does not, because every answer is gated by:
+
+1. Hybrid retrieval (BM25 + vector) plus Cohere rerank
+2. Structured-output JSON with explicit citations
+3. A guard layer that verifies each cited quote appears verbatim in the cited chunk
+4. A 30-case eval suite that runs in CI on every PR — regressions fail the build
+
+## Stack
+
+Node.js 20, TypeScript, Postgres + pgvector, Drizzle, @slack/bolt, Next.js, Vitest, Railway.
+
+**Pluggable model providers** — flip `MODEL_PROVIDER`:
+
+- `openai` (default, hosted demo): OpenAI `text-embedding-3-small` + `gpt-4o-mini`, Cohere `rerank-english-v3`
+- `local` (open-source, no API keys): three `llama-server` (llama.cpp) processes — Qwen2.5-7B-Instruct + bge-base-en-v1.5 + bge-reranker-v2-m3
+
+## Local setup (OpenAI provider)
+
+\`\`\`bash
+pnpm install
+docker compose up -d postgres
+psql "$DATABASE_URL" -f packages/core/migrations/0000_init.sql
+pnpm seed
+pnpm --filter @support-copilot/web dev # web demo on :3001
+pnpm --filter @support-copilot/slack-app start # slack on :3000
+\`\`\`
+
+## Local setup (open-source local provider)
+
+See the "Local model stack" section above. Same web/Slack apps; only the seed/migration step differs (`0001_local_dims.sql`) and you start three `llama-server` processes instead of pointing at OpenAI.
+
+## Tests and evals
+
+\`\`\`bash
+pnpm test     # vitest unit + integration (covers both provider paths via mocked fetch)
+pnpm eval     # 30 case suite (uses whichever provider is selected by env)
+\`\`\`
+
+## License
+
+MIT.
+```
+
+- [ ] **Step 3: Record Loom (5 min)**
+
+Script:
+
+1. (0:00–0:30) Problem framing — "tier-1 support, hallucination risk, citation requirement."
+2. (0:30–1:30) Architecture walkthrough on `docs/architecture.md`.
+3. (1:30–3:00) Live demo on Railway URL: ask a known question, show citations + confidence; ask an unknowable question, show escalation; ask a tricky multi-doc question.
+4. (3:00–4:00) Eval harness — run `pnpm --filter @support-copilot/core eval`, show 30 passing.
+5. (4:00–5:00) Repo walkthrough — point at `guard.ts`, `hybrid.ts`, eval workflow file.
+
+Upload Loom, copy public link.
+
+- [ ] **Step 4: Add Loom link to README**
+
+```md
+**Walkthrough:** [5-min Loom](paste-link)
+```
+
+- [ ] **Step 5: Commit and tag**
+
+```bash
+git add .
+git commit -m "docs: architecture diagram, readme polish, loom walkthrough link"
+git tag v0.1.0
+git push --tags
 ```
 
 ---
@@ -3653,9 +3704,11 @@ git commit -m "feat(providers): pluggable openai|local provider with llama.cpp +
 - ✓ Cohere rerank (Task 10)
 - ✓ gpt-4o-mini structured output JSON (Task 12)
 - ✓ Hallucination guard (Task 13)
-- ✓ Slack Bolt + Next.js demo (Tasks 17, 18)
+- ✓ Slack Bolt + Next.js demo (Tasks 17, 18) — both routed through the provider abstraction
 - ✓ 30 Q+citation eval pairs in CI (Tasks 15, 16, 19)
-- ✓ Railway deploy with public demo URL (Task 20)
+- ✓ Railway deploy with public demo URL (Task 20) — OpenAI provider
+- ✓ Pluggable model providers, including a no-API-key local stack via llama.cpp + bge embed/rerank GGUF (Task 21)
+- ✓ Architecture diagram + README polish + Loom (Task 22)
 - ✓ Out-of-scope items NOT added: no auth/SSO, no multi-tenant, no fine-tuning, no conversation memory, no analytics dashboard, no billing.
 
 **Type consistency:** `RetrievedChunk` defined in `retrieve/vector.ts` and reused everywhere. `Answer` schema defined in `generate/answer.ts` and reused in guard, orchestration, eval.
