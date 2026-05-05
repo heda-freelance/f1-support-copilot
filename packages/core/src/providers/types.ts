@@ -25,4 +25,5 @@ export interface ModelProviders {
   chat: ChatProvider;
   embed: EmbedProvider;
   rerank: RerankProvider;
+  minConfidence: number;
 }

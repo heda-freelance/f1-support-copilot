@@ -7,6 +7,13 @@ settings:
 importers:
 
   .:
+    dependencies:
+      '@support-copilot/core':
+        specifier: workspace:*
+        version: link:packages/core
+      drizzle-orm:
+        specifier: ^0.45.2
+        version: 0.45.2(@types/pg@8.20.0)(postgres@3.4.9)
     devDependencies:
       '@types/node':
         specifier: ^20.12.0

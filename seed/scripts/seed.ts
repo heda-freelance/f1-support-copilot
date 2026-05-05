@@ -3,6 +3,7 @@ import { join, basename, extname } from "node:path";
 import {
   ingestDocument,
   createDbClient,
+  closeDb,
   buildProviders,
 } from "@support-copilot/core";
 import { sql } from "drizzle-orm";
@@ -27,6 +28,7 @@ async function main() {
     );
     console.log(`seeded ${basename(f)} → doc ${id}`);
   }
+  await closeDb(db);
 }
 main().catch((e) => {
   console.error(e);

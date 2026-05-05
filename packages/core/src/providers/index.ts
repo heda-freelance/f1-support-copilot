@@ -15,6 +15,7 @@ export function buildProviders(
       embedDim: Number(env.LOCAL_EMBED_DIM ?? 768),
       rerankUrl: env.LOCAL_RERANK_URL ?? "http://localhost:8082",
       rerankModel: env.LOCAL_RERANK_MODEL ?? "default",
+      minConfidence: Number(env.LOCAL_MIN_CONFIDENCE ?? 0.3),
     });
   }
   return buildOpenAIProvider(env);

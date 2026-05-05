@@ -9,6 +9,7 @@ const cfg: LocalConfig = {
   embedDim: 768,
   rerankUrl: "http://r",
   rerankModel: "default",
+  minConfidence: 0.3,
 };
 
 const realFetch = globalThis.fetch;
@@ -67,6 +68,11 @@ describe("local embed", () => {
   it("reports configured dimensions", () => {
     const p = buildLocalProvider(cfg);
     expect(p.embed.dimensions()).toBe(768);
+  });
+
+  it("exposes the configured minConfidence", () => {
+    const p = buildLocalProvider({ ...cfg, minConfidence: 0.42 });
+    expect(p.minConfidence).toBe(0.42);
   });
 });
 

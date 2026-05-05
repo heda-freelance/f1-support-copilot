@@ -20,5 +20,6 @@ export function buildOpenAIProvider(env: NodeJS.ProcessEnv): ModelProviders {
     rerank: {
       rerank: (q, c, opts) => cohereRerank(cohere, q, c, opts),
     },
+    minConfidence: Number(env.OPENAI_MIN_CONFIDENCE ?? 0.5),
   };
 }

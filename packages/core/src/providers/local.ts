@@ -11,6 +11,7 @@ export interface LocalConfig {
   embedDim: number;
   rerankUrl: string;
   rerankModel: string;
+  minConfidence: number;
 }
 
 export function buildLocalProvider(cfg: LocalConfig): ModelProviders {
@@ -73,5 +74,6 @@ export function buildLocalProvider(cfg: LocalConfig): ModelProviders {
           }));
       },
     },
+    minConfidence: cfg.minConfidence,
   };
 }

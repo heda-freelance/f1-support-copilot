@@ -14,7 +14,7 @@ export COHERE_API_KEY=...
 export DATABASE_URL=postgres://copilot:copilot@localhost:5432/copilot
 pnpm install
 pnpm seed
-pnpm --filter @support-copilot/core eval
+pnpm eval
 ```
 
 ## Local model stack (no API keys required)
@@ -80,7 +80,7 @@ Runs the entire pipeline against open-source GGUF models via three native `llama
    export LOCAL_EMBED_DIM=768
    export DATABASE_URL=postgres://copilot:copilot@localhost:5432/copilot
    pnpm seed
-   pnpm --filter @support-copilot/core eval
+   pnpm eval
    ```
 
 Switching providers requires re-ingestion. Run `0001_local_dims.sql` (or the inverse `0001_openai_dims.sql`) and re-`pnpm seed` whenever you change `MODEL_PROVIDER`.

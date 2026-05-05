@@ -8,3 +8,7 @@ export function createDbClient(connectionString: string) {
 }
 
 export type Db = ReturnType<typeof createDbClient>;
+
+export function closeDb(db: Db): Promise<void> {
+  return db.$client.end();
+}

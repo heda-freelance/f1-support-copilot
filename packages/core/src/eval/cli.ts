@@ -1,7 +1,7 @@
 import { loadCases } from "./loader.js";
 import { runCases, type AnnotatedAnswer } from "./runner.js";
 import { writeFile } from "node:fs/promises";
-import { createDbClient } from "../db/client.js";
+import { createDbClient, closeDb } from "../db/client.js";
 import { vectorSearch } from "../retrieve/vector.js";
 import { bm25Search } from "../retrieve/bm25.js";
 import { retrieve } from "../retrieve/index.js";
@@ -14,7 +14,7 @@ async function buildAnswerFn() {
   const db = createDbClient(process.env.DATABASE_URL!);
   const providers = buildProviders();
 
-  return async (query: string): Promise<AnnotatedAnswer> => {
+  const answer = async (query: string): Promise<AnnotatedAnswer> => {
     const chunks = await retrieve(query, {
       embedQuery: async (q) => (await providers.embed.embed([q]))[0]!,
       vectorSearch: (vec, opts) => vectorSearch(db, vec, opts),
@@ -24,7 +24,9 @@ async function buildAnswerFn() {
       topN: 6,
     });
     const raw = await providers.chat.generateAnswer({ query, chunks });
-    const guarded = applyGuard(raw, chunks, { minConfidence: 0.5 });
+    const guarded = applyGuard(raw, chunks, {
+      minConfidence: providers.minConfidence,
+    });
 
     const citedDocIds = [
       ...new Set(
@@ -47,13 +49,15 @@ async function buildAnswerFn() {
     }
     return { ...guarded, _docSources: docSources };
   };
+
+  return { answer, close: () => closeDb(db) };
 }
 
 async function main() {
   const path = process.argv[2] ?? "eval/cases.yaml";
   const cases = await loadCases(path);
-  const answerFn = await buildAnswerFn();
-  const report = await runCases(cases, answerFn);
+  const { answer, close } = await buildAnswerFn();
+  const report = await runCases(cases, answer);
 
   console.log(`\n=== Eval Report ===`);
   console.log(`${report.passed}/${report.total} passed\n`);
@@ -72,6 +76,7 @@ async function main() {
       2,
     ),
   );
+  await close();
   if (report.passed < report.total) process.exit(1);
 }
 

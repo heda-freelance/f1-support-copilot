@@ -6,7 +6,12 @@
     "test": "pnpm -r test",
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
-    "seed": "tsx seed/scripts/seed.ts"
+    "seed": "tsx seed/scripts/seed.ts",
+    "eval": "tsx packages/core/src/eval/cli.ts"
+  },
+  "dependencies": {
+    "@support-copilot/core": "workspace:*",
+    "drizzle-orm": "^0.45.2"
   },
   "devDependencies": {
     "@types/node": "^20.12.0",
