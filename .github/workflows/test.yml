@@ -1,0 +1,32 @@
+name: test
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: copilot
+          POSTGRES_PASSWORD: copilot
+          POSTGRES_DB: copilot
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgres://copilot:copilot@localhost:5432/copilot
+      # The local provider's embed/rerank/chat paths are exercised via mocked
+      # fetch in tests/providers/local.test.ts — no real services needed.
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with: { version: 9 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: docker run --rm --network host -v $PWD/packages/core/migrations:/m postgres:16 psql "$DATABASE_URL" -f /m/0000_init.sql
+      - run: pnpm test

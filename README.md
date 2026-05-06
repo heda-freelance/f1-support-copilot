@@ -15,6 +15,9 @@ export DATABASE_URL=postgres://copilot:copilot@localhost:5432/copilot
 pnpm install
 pnpm seed
 pnpm eval
+
+# Demo web widget on http://localhost:3001
+pnpm --filter @support-copilot/web dev
 ```
 
 ## Local model stack (no API keys required)
@@ -81,6 +84,26 @@ Runs the entire pipeline against open-source GGUF models via three native `llama
    export DATABASE_URL=postgres://copilot:copilot@localhost:5432/copilot
    pnpm seed
    pnpm eval
+   ```
+
+6. Run the demo web widget against the local stack:
+
+   ```bash
+   MODEL_PROVIDER=local \
+   LOCAL_EMBED_DIM=768 \
+   DATABASE_URL=postgres://copilot:copilot@localhost:5432/copilot \
+     pnpm --filter @support-copilot/web dev
+   ```
+
+   Open http://localhost:3001 and ask a seeded question. The route at `POST /api/ask` uses the same `buildProviders()` selector as `pnpm seed` / `pnpm eval`, so the three `llama-server` processes from step 3 must be running.
+
+   Optional overrides (defaults shown):
+
+   ```bash
+   LOCAL_LLM_URL=http://localhost:8080/v1
+   LOCAL_EMBED_URL=http://localhost:8081/v1
+   LOCAL_RERANK_URL=http://localhost:8082
+   LOCAL_MIN_CONFIDENCE=0.3
    ```
 
 Switching providers requires re-ingestion. Run `0001_local_dims.sql` (or the inverse `0001_openai_dims.sql`) and re-`pnpm seed` whenever you change `MODEL_PROVIDER`.

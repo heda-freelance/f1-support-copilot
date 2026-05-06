@@ -2734,7 +2734,7 @@ git commit -m "feat(slack-app): @-mention answer flow with citations"
 
 - Create: `packages/web/package.json`, `packages/web/next.config.mjs`, `packages/web/tsconfig.json`, `packages/web/app/layout.tsx`, `packages/web/app/page.tsx`, `packages/web/app/api/ask/route.ts`, `packages/web/app/globals.css`
 
-- [ ] **Step 1: Scaffold the package**
+- [x] **Step 1: Scaffold the package**
 
 `packages/web/package.json`:
 
@@ -2783,7 +2783,7 @@ export default { reactStrictMode: true };
 }
 ```
 
-- [ ] **Step 2: Implement the API route**
+- [x] **Step 2: Implement the API route**
 
 `packages/web/app/api/ask/route.ts`:
 
@@ -2832,7 +2832,7 @@ export async function POST(req: Request) {
 }
 ```
 
-- [ ] **Step 3: Implement the UI**
+- [x] **Step 3: Implement the UI**
 
 `packages/web/app/layout.tsx`:
 
@@ -2955,7 +2955,7 @@ export default function Home() {
 }
 ```
 
-- [ ] **Step 4: Smoke test locally**
+- [x] **Step 4: Smoke test locally**
 
 ```bash
 # OpenAI provider (default)
@@ -2968,7 +2968,7 @@ MODEL_PROVIDER=local LOCAL_EMBED_DIM=768 \
 
 Open http://localhost:3001, ask a seeded question, verify response. The same UI works for both providers; only the seed/migration step differs (`0001_local_dims.sql` vs `0001_openai_dims.sql`).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add .
@@ -2985,7 +2985,7 @@ CI exercises both provider code paths (the local provider's HTTP layer is unit-t
 
 - Create: `.github/workflows/test.yml`, `.github/workflows/eval.yml`
 
-- [ ] **Step 1: Write the test workflow**
+- [x] **Step 1: Write the test workflow**
 
 `.github/workflows/test.yml`:
 
@@ -3024,7 +3024,7 @@ jobs:
       - run: pnpm test
 ```
 
-- [ ] **Step 2: Write the eval workflow**
+- [x] **Step 2: Write the eval workflow**
 
 This job runs the full OpenAI-backed eval (real LLM calls) gated on repo secrets. It does not run the local stack — see the note at the top of this task.
 
@@ -3084,7 +3084,7 @@ git push -u origin main
 
 Open a tiny throwaway PR. Verify both workflows run green.
 
-- [ ] **Step 5: Commit (workflows themselves were added in Step 1-2)**
+- [x] **Step 5: Commit (workflows themselves were added in Step 1-2)**
 
 ```bash
 git add .github/
