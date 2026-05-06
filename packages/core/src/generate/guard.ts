@@ -4,6 +4,14 @@ import type { RetrievedChunk } from "../retrieve/vector.js";
 const FALLBACK =
   "I don't know based on the available docs — escalating to a human agent.";
 
+function normalize(s: string): string {
+  return s
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .replace(/\s+/g, " ")
+    .toLowerCase()
+    .trim();
+}
+
 export interface GuardOptions {
   minConfidence: number;
 }
@@ -23,9 +31,7 @@ export function applyGuard(
 
   for (const cit of citedKnown) {
     const chunk = chunks.find((c) => c.chunkId === cit.chunkId)!;
-    const normalized = (s: string) =>
-      s.replace(/\s+/g, " ").toLowerCase().trim();
-    if (!normalized(chunk.text).includes(normalized(cit.quote))) {
+    if (!normalize(chunk.text).includes(normalize(cit.quote))) {
       reasons.push(`quote_not_in_chunk_${cit.chunkId}`);
     }
   }

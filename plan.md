@@ -2598,7 +2598,7 @@ git commit -m "feat(seed,eval): 8 sanitized help docs and 30 evaluation cases"
 
 - Create: `packages/slack-app/package.json`, `packages/slack-app/tsconfig.json`, `packages/slack-app/src/index.ts`
 
-- [ ] **Step 1: Scaffold the package**
+- [x] **Step 1: Scaffold the package**
 
 `packages/slack-app/package.json`:
 
@@ -2644,7 +2644,7 @@ Drop the direct `openai` and `cohere-ai` deps; the Slack app talks to whichever 
 }
 ```
 
-- [ ] **Step 2: Implement the Bolt app**
+- [x] **Step 2: Implement the Bolt app**
 
 `packages/slack-app/src/index.ts`:
 
@@ -2706,7 +2706,7 @@ const port = Number(process.env.PORT ?? 3000);
 app.start(port).then(() => console.log(`slack-app listening on :${port}`));
 ```
 
-- [ ] **Step 3: Smoke run locally**
+- [x] **Step 3: Smoke run locally**
 
 ```bash
 # OpenAI provider (default)
@@ -2719,7 +2719,7 @@ MODEL_PROVIDER=local LOCAL_EMBED_DIM=768 \
 
 Expected: console shows `slack-app listening on :3000`. Use `ngrok http 3000` and configure Slack App `Event Subscriptions` Request URL to validate.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add .
@@ -3167,7 +3167,7 @@ Open the public web URL, run a query against the seeded "Acme SaaS" docs. Verify
 ```md
 ## Deploy
 
-Web: https://support-copilot-web.up.railway.app  (OpenAI provider)
+Web: https://support-copilot-web.up.railway.app (OpenAI provider)
 Slack: install via [this link](https://...)
 
 The hosted demo runs the OpenAI provider only. To run with the open-source local stack, follow the "Local model stack" section above — it does not require any external API keys.
@@ -3655,8 +3655,8 @@ See the "Local model stack" section above. Same web/Slack apps; only the seed/mi
 ## Tests and evals
 
 \`\`\`bash
-pnpm test     # vitest unit + integration (covers both provider paths via mocked fetch)
-pnpm eval     # 30 case suite (uses whichever provider is selected by env)
+pnpm test # vitest unit + integration (covers both provider paths via mocked fetch)
+pnpm eval # 30 case suite (uses whichever provider is selected by env)
 \`\`\`
 
 ## License

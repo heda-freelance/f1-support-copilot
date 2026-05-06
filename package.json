@@ -6,8 +6,8 @@
     "test": "pnpm -r test",
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
-    "seed": "tsx seed/scripts/seed.ts",
-    "eval": "tsx packages/core/src/eval/cli.ts"
+    "seed": "tsx --env-file=.env seed/scripts/seed.ts",
+    "eval": "tsx --env-file=.env packages/core/src/eval/cli.ts"
   },
   "dependencies": {
     "@support-copilot/core": "workspace:*",

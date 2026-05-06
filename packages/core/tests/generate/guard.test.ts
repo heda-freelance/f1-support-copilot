@@ -57,4 +57,29 @@ describe("applyGuard", () => {
     });
     expect(out.escalate).toBe(true);
   });
+
+  it("tolerates punctuation/whitespace differences between quote and chunk", () => {
+    const chunkText =
+      "To reset your password, follow these steps:\n\n1. Go to the login page of the application.\n2. Click on the 'Forgot Password' link.";
+    const quoteWithDroppedSpace =
+      "To reset your password, follow these steps:1. Go to the login page of the application.";
+    const ans: Answer = {
+      ...baseAnswer,
+      citations: [{ chunkId: 1, quote: quoteWithDroppedSpace }],
+    };
+    const out = applyGuard(ans, [chunk(1, chunkText)], { minConfidence: 0.5 });
+    expect(out.escalate).toBe(false);
+    expect(out.answer).toBe(baseAnswer.answer);
+  });
+
+  it("still escalates when quote shares no meaningful tokens with chunk", () => {
+    const ans: Answer = {
+      ...baseAnswer,
+      citations: [{ chunkId: 1, quote: "completely different content here" }],
+    };
+    const out = applyGuard(ans, [chunk(1, "Go to settings to reset.")], {
+      minConfidence: 0.5,
+    });
+    expect(out.escalate).toBe(true);
+  });
 });
